@@ -7,6 +7,7 @@ import listPlugin from '@fullcalendar/list';
 import jaLocale from '@fullcalendar/core/locales/ja';
 
 export default function Dashboard() {
+
 	return (
 		<AuthenticatedLayout
 			header={
