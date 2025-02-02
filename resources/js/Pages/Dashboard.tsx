@@ -36,6 +36,12 @@ export default function Dashboard() {
 									center: 'title',
 									right: 'dayGridMonth,timeGridWeek,listWeek',
 								}}
+								dayCellClassNames={(arg) => {
+									const date = arg.date;
+									if (date.getDay() === 0) return "bg-blue-100";
+									if (date.getDay() === 6) return "bg-blue-100";
+									return "";
+								}}
 							/>
 						</div>
 					</div>
