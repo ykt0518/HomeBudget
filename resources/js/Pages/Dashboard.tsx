@@ -5,9 +5,51 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
 import jaLocale from '@fullcalendar/core/locales/ja';
+import { useState, useEffect } from 'react';
+
+const fetchHolidays = async (): Promise<{ date: string, name: string }[]> => {
+  try {
+    const response = await fetch("https://holidays-jp.github.io/api/v1/date.json");
+    const data = await response.json();
+
+    const currentYear = new Date().getFullYear();
+
+    // APIから取得した祝日データを現在の年にフィルタリング
+    const holidaysForCurrentYear = Object.keys(data).filter(date => {
+      const holidayYear = new Date(date).getFullYear();
+      return holidayYear === currentYear; // 現在の年と一致する祝日を取得
+    });
+
+    // 祝日名と日付をイベント形式に変換
+    return holidaysForCurrentYear.map(date => ({
+      date: date,
+      name: data[date],
+    }));
+  } catch (error) {
+    console.error("Failed to fetch holidays:", error);
+    return [];
+  }
+};
 
 export default function Dashboard() {
+	const [holidays, setHolidays] = useState<{ date: string, name: string }[]>([]);
 
+  useEffect(() => {
+    fetchHolidays().then(holidays => {
+      setHolidays(holidays);
+    });
+  }, []);
+
+  // 祝日の日付をセットに変換（ローカルタイム）
+  const holidayDates = new Set(
+    holidays.map(holiday => {
+      const date = new Date(holiday.date);
+      // ローカルタイムでの祝日をUTCの日付と一致させるために、時間を00:00:00に調整
+      date.setHours(0, 0, 0, 0);  // ここでローカルタイムに調整
+      return date.toISOString().split("T")[0]; // 日付部分を取得
+    })
+  );
+	
 	return (
 		<AuthenticatedLayout
 			header={
@@ -37,9 +79,13 @@ export default function Dashboard() {
 									right: 'dayGridMonth,timeGridWeek,listWeek',
 								}}
 								dayCellClassNames={(arg) => {
-									const date = arg.date;
-									if (date.getDay() === 0) return "bg-blue-100";
-									if (date.getDay() === 6) return "bg-blue-100";
+									const dateStr = arg.date.toISOString().split("T")[0];
+									if (arg.date.getDay() === 0 || arg.date.getDay() === 6) {
+										return "bg-blue-100";
+									}
+									if (holidayDates.has(dateStr)) {
+										return "bg-red-100";
+									}
 									return "";
 								}}
 							/>
