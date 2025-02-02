@@ -9,19 +9,22 @@ import { useState, useEffect } from 'react';
 
 const fetchHolidays = async (): Promise<{ date: string, name: string }[]> => {
   try {
+		// 国民の祝日API
     const response = await fetch("https://holidays-jp.github.io/api/v1/date.json");
     const data = await response.json();
 
     const currentYear = new Date().getFullYear();
+    const startYear = currentYear - 1;
+    const endYear = currentYear + 1;
 
-    // APIから取得した祝日データを現在の年にフィルタリング
-    const holidaysForCurrentYear = Object.keys(data).filter(date => {
+    // 現在の年と前後1年分を取得
+    const holidaysForSelectedYears = Object.keys(data).filter(date => {
       const holidayYear = new Date(date).getFullYear();
-      return holidayYear === currentYear; // 現在の年と一致する祝日を取得
+      return holidayYear >= startYear && holidayYear <= endYear;
     });
 
     // 祝日名と日付をイベント形式に変換
-    return holidaysForCurrentYear.map(date => ({
+    return holidaysForSelectedYears.map(date => ({
       date: date,
       name: data[date],
     }));
@@ -40,13 +43,12 @@ export default function Dashboard() {
     });
   }, []);
 
-  // 祝日の日付をセットに変換（ローカルタイム）
+  // FullCarenderと国民の祝日APIのローカルタイムを一致させる
   const holidayDates = new Set(
     holidays.map(holiday => {
       const date = new Date(holiday.date);
-      // ローカルタイムでの祝日をUTCの日付と一致させるために、時間を00:00:00に調整
-      date.setHours(0, 0, 0, 0);  // ここでローカルタイムに調整
-      return date.toISOString().split("T")[0]; // 日付部分を取得
+      date.setHours(0, 0, 0, 0);
+      return date.toISOString().split("T")[0];
     })
   );
 	
@@ -78,6 +80,7 @@ export default function Dashboard() {
 									center: 'title',
 									right: 'dayGridMonth,timeGridWeek,listWeek',
 								}}
+								// 土日と祝日の色を変える
 								dayCellClassNames={(arg) => {
 									const dateStr = arg.date.toISOString().split("T")[0];
 									if (arg.date.getDay() === 0 || arg.date.getDay() === 6) {
