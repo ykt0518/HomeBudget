@@ -73,6 +73,18 @@ export default function Dashboard({ expenses, search_str, successMessage }: Expe
   const prevMonth = selectedMonth === 1 ? 12 : selectedMonth - 1;
   const nextMonth = selectedMonth === 12 ? 1 : selectedMonth + 1;
 
+  const [message, setMessage] = useState<string | null>(successMessage || null);
+
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => {
+        setMessage(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
+
+
   return (
     <AuthenticatedLayout
       header={
@@ -124,9 +136,9 @@ export default function Dashboard({ expenses, search_str, successMessage }: Expe
               />
             </div>
             <div>
-              {successMessage && (
+              {message && (
                 <div className="bg-green-100 border-green-400 text-green-700 px-4 py-3 rounded m-3">
-                  {successMessage}
+                  {message}
                 </div>
               )}
               <table className="table-auto border border-gray-400 w-10/12 m-3">
