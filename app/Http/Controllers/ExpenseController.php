@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Expense;
 use App\Models\Category;
 use App\Models\Method;
@@ -18,13 +19,14 @@ class ExpenseController extends Controller
      */
     public function index(Request $request)
     {
-        if(empty($request->input()['search_str'])){
-            $search_str=null;
-            $expenses = Expense::with(['category', 'method'])->get();
-        }else{
-            $search_str=$request->input()['search_str'];
-            $expenses = Expense::with(['category', 'method'])
-            ->where(function ($query) use ($search_str) {
+        // ログインユーザーの支出データのみ取得
+        $query = Expense::with(['category', 'method'])
+            ->where('user_id', Auth::id());  // ユーザーIDで絞り込み
+
+        // 検索文字列がある場合のみフィルタリング
+        if (!empty($request->input('search_str'))) {
+            $search_str = $request->input('search_str');
+            $expenses = $query->where(function ($query) use ($search_str) {
                 $query->whereRaw("DATE_FORMAT(date, '%c/%e') LIKE ?", ["%{$search_str}%"])
                     ->orWhereHas('category', function ($q) use ($search_str) {
                         $q->where('category', 'LIKE', "%{$search_str}%");
@@ -32,11 +34,15 @@ class ExpenseController extends Controller
                     ->orWhereHas('method', function ($q) use ($search_str) {
                         $q->where('method', 'LIKE', "%{$search_str}%");
                     });
-            })
-            ->get();
+            })->get();
+        } else {
+            $expenses = $query->get();  // 検索文字列がない場合はユーザーの全ての支出データ
+            $search_str = null;
         }
+
         $categories = Category::all();
         $methods = Method::all();
+
         return Inertia::render('Expenses/Index', [
             'expenses' => $expenses,
             'categories' => $categories,
@@ -44,6 +50,7 @@ class ExpenseController extends Controller
             'search_str' => $search_str,
         ]);
     }
+
 
     /**
      * Show the form for creating a new resource.
@@ -66,6 +73,7 @@ class ExpenseController extends Controller
     public function store(ExpenseRequest $request)
     {
         $expense = new Expense($request->input());
+        $expense->user_id = Auth::id();
         $expense->save();
         return redirect('expenses')->with('success_str', '登録が完了しました。');
     }

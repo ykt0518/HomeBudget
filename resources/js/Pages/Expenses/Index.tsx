@@ -33,7 +33,7 @@ interface ExpensesProps {
   successMessage?: string;
 }
 
-export default function Dashboard({ expenses, search_str, successMessage }: ExpensesProps) {
+export default function Expenses({ expenses, search_str, successMessage }: ExpensesProps) {
 
   const [searchStr, setSearchStr] = useState<string>(search_str || '');
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
@@ -93,7 +93,7 @@ export default function Dashboard({ expenses, search_str, successMessage }: Expe
         </h2>
       }
     >
-      <Head title="Dashboard" />
+      <Head title="Expenses" />
 
       <div className="py-12">
         <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
