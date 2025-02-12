@@ -39,7 +39,7 @@ class ExpenseController extends Controller
             $expenses = $query->get();  // 検索文字列がない場合はユーザーの全ての支出データ
             $search_str = null;
         }
-
+        
         $categories = Category::all();
         $methods = Method::all();
 

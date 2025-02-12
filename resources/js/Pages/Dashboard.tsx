@@ -7,6 +7,11 @@ import listPlugin from '@fullcalendar/list';
 import jaLocale from '@fullcalendar/core/locales/ja';
 import { useState, useEffect } from 'react';
 
+interface Expense {
+  date: string;
+  total_payment: number;
+}
+
 const fetchHolidays = async (): Promise<{ date: string, name: string }[]> => {
   try {
 		// 国民の祝日API
@@ -34,7 +39,7 @@ const fetchHolidays = async (): Promise<{ date: string, name: string }[]> => {
   }
 };
 
-export default function Dashboard() {
+export default function Dashboard({ expenses = [] }: { expenses: Expense[] }) {
 	const [holidays, setHolidays] = useState<{ date: string, name: string }[]>([]);
 
   useEffect(() => {
@@ -51,6 +56,18 @@ export default function Dashboard() {
       return date.toISOString().split("T")[0];
     })
   );
+	
+  // 金額合計をカレンダーイベント形式に変換
+  const calendarEvents = expenses.map(expense => {
+		const payment = Number(expense.total_payment); // 数値に変換
+		return {
+			title: `¥${payment.toLocaleString('ja-JP')}`, // カンマ区切り
+			date: new Date(expense.date).toISOString().split("T")[0],
+			extendedProps: {
+				payment, // そのまま数値で格納
+			}
+		};
+	});
 	
 	return (
 		<AuthenticatedLayout
@@ -80,14 +97,18 @@ export default function Dashboard() {
 									center: 'title',
 									right: 'dayGridMonth,timeGridWeek,listWeek',
 								}}
+								events={calendarEvents}
 								// 土日と祝日の色を変える
 								dayCellClassNames={(arg) => {
 									const dateStr = arg.date.toISOString().split("T")[0];
-									if (arg.date.getDay() === 0 || arg.date.getDay() === 6) {
-										return "bg-blue-100";
+									if (arg.date.getDay() === 0) {
+										return "bg-gray-100 text-red-600";
+									}
+									if (arg.date.getDay() === 6) {
+										return "bg-gray-100";
 									}
 									if (holidayDates.has(dateStr)) {
-										return "bg-red-100";
+										return "text-red-600 font-medium";
 									}
 									return "";
 								}}
